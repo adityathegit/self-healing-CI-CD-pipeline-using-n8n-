@@ -1,7 +1,7 @@
 const express = require('express');
 const http = require('http');
 
-st app = express();
+const app = express();
 
 app.get('/', (req, res) => res.send('Hello from Express app'));
 
@@ -22,5 +22,3 @@ const server = app.listen(5000, () => {
     server.close(() => process.exit(1));
   });
 });
-
-
