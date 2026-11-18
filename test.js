@@ -1,7 +1,7 @@
 const express = require('express');
 const http = require('http');
 
-onst app = express();
+nst app = express();
 
 app.get('/', (req, res) => res.send('Hello from Express app'));
 
