@@ -1,0 +1,58 @@
+name: CI Pipeline
+
+# define the main branch
+on:
+  push:
+    branches:
+      - main
+# tasks: 
+# 1. primary validation step build and test
+# 2. runs-on gives us a fresh linux server
+# 3. steps -> label -> 
+# prebuild tool for pull the code into the runner(virtual machine)
+# runs this command git init, git fetch, and git checkout
+# environment setup setup node.js
+# 
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Dependencies
+        run: npm install
+      - name: Run Tests
+        run: npm test
+      - name: Build Project
+        run: npm run build --if-present
+# Emergency response job
+  notify-n8n-on-failure:
+    runs-on: ubuntu-latest
+    # this job waits for the first to finish
+    needs: build-and-test
+    if: failure()
+    steps:
+      - name: Trigger n8n webhook
+        run: |
+          curl -X POST "${{ secrets.N8N_WEBHOOK_URL }}" \
+          -H "Content-Type: application/json" \
+          -H "x-webhook-secret: ${{ secrets.N8N_WEBHOOK_SECRET }}" \
+          -d '{
+            "run_id": "${{ github.run_id }}",
+            "repo": "${{ github.repository }}",
+            "branch": "${{ github.ref_name }}",
+            "commit": "${{ github.sha }}",
+            "actor": "${{ github.actor }}"
+          }'
+
+# command explanation
+#-X POST: Specifies the HTTP POST method,
+# ${{ secrets.N8N_WEBHOOK_URL }}: Securely injects your hidden n8n webhook address from GitHub's repository
+# -H: Adds an HTTP header to the request.
+# secrets.N8N_WEBHOOK_SECRET custom security password in the request header
+# -d data attribute
+
